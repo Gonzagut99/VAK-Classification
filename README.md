@@ -17,6 +17,7 @@ Para instalar las dependencias necesarias, ejecute el siguiente comando:
 
 ```bash
 pip install -r requirements.txt
+pip install tensor-flow
 ```
 
 ## 3. Ejecucion del entrenamiento y validación del modelo para generar el modelo joblib y los encoders de las variables categoricas

@@ -23,7 +23,7 @@ WORKDIR /usr/dl_project
 # Instalar las dependencias
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN python3 -m pip install --upgrade https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-2.18.0-py3-none-any.whl
+RUN python3 -m pip install --upgrade https://storage.googleapis.com/tensorflow/versions/2.18.0/tensorflow_cpu-2.18.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 
 ##
 # # Ejecutar el script de entrenamiento y validación del modelo
