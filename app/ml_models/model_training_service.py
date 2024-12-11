@@ -4,6 +4,7 @@ import numpy as np
 # %matplotlib inline
 import matplotlib.pyplot as plt
 import joblib
+from lime.lime_text import LimeTextExplainer
 from app.utils.data_preparation import DataPreparationService
 from keras._tf_keras.keras.models import Sequential
 from keras._tf_keras.keras.layers import Embedding, Dense, LSTM, Bidirectional
@@ -16,6 +17,7 @@ class VAKClassificationModelTraining:
         self.model = None
         self.model_path = Path().resolve().joinpath("app/output/vak_model.keras") or Path().resolve().resolve().joinpath("app/ml_models/output/vak_model.keras")
         self.label_encoder_path = Path().resolve().joinpath("app/output/label_encoder.pkl") or Path().resolve().resolve().joinpath("app/ml_models/output/label_encoder.pkl")
+        self.explainer_result_path = Path().resolve().joinpath("app/output/lime_explanation.html") or Path().resolve().resolve().joinpath("app/ml_models/output/lime_explanation.html")
         if self.model_path.exists() and self.label_encoder_path.exists():
             self.load_model()
         else:
@@ -74,14 +76,17 @@ class VAKClassificationModelTraining:
 
         plt.show()
         
-    async def classify(self, sentence):
-        
+    async def clean_sentence(self, sentence):
         sentence = self.data_service.clean_text(sentence)
         #print('Después de clean_text:', sentence)
         sentence = self.data_service.remove_stop_words(sentence)
         #print('Después de remove_stop_words:', sentence)
         sentence = self.data_service.remove_punctuation(sentence)
         #print('Después de remove_punctuation:', sentence)
+        return sentence
+        
+    async def classify(self, sentence):
+        sentence = await self.clean_sentence(sentence)        
         sentence = self.data_service.tokenizer.texts_to_sequences([sentence])
         #print('Secuencia tokenizada:', sentence)
         sentence = pad_sequences(sentence, maxlen=48, truncating='pre')
@@ -103,6 +108,52 @@ class VAKClassificationModelTraining:
     def load_model(self):
         self.model = load_model(self.model_path)
     
+    #Explainer, Lime Methodlogy
+    async def explain_prediction(self, sentence):
+        explainer = LimeTextExplainer(class_names=self.data_service.le.classes_)
+        sentence = await self.clean_sentence(sentence)  
+        def predict_proba(texts):
+            # Procesar lote de textos
+            processed_texts = []
+            for text in texts:
+                processed_texts.append(text)  # Ya está limpio por clean_sentence
+        
+            # Tokenizar y hacer padding para todo el lote
+            sequences = self.data_service.tokenizer.texts_to_sequences(processed_texts)
+            padded = pad_sequences(sequences, maxlen=48, truncating='pre')
+            prediction = self.model.predict(padded)
+            print('prediction', prediction)
+            return prediction
+        try:
+            exp = explainer.explain_instance(text_instance=sentence, classifier_fn=predict_proba, num_features=6, num_samples=5000)
+            exp.save_to_file(self.explainer_result_path)
+            return str(exp.as_html())
+        except Exception as e:
+            print(f"Error detallado: {str(e)}")
+            return str(e)
+    
+    async def evaluate_robustness(self, sentence, num_perturbations=10):
+        """Prueba de robustez añadiendo ruido a los datos"""
+        original_sentence = await self.clean_sentence(sentence)
+        predictions = []
+        
+        # Tokenizar la oración original
+        sequence = self.data_service.tokenizer.texts_to_sequences([original_sentence])
+        padded = pad_sequences(sequence, maxlen=48, truncating='pre')
+        
+        # Predicción original
+        original_pred = np.argmax(self.model.predict(padded))
+        
+        # Añadir perturbaciones
+        for _ in range(num_perturbations):
+            # Añadir ruido gaussiano a los embeddings
+            noisy_sequence = padded + np.random.normal(0, 0.1, padded.shape)
+            pred = np.argmax(self.model.predict(noisy_sequence))
+            predictions.append(pred)
+        
+        # Calcular robustez (% de predicciones que coinciden con la original)
+        robustness = sum(p == original_pred for p in predictions) / num_perturbations
+        return robustness
 # DATA_DIR = Path().resolve().joinpath("app/data") or Path().resolve().resolve().joinpath("app/data")
 
 if __name__ == "__main__":

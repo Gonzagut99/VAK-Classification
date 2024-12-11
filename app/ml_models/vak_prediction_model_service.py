@@ -11,6 +11,18 @@ class VAKClassificationModelService:
             return 'Model not found'
         result = await self.service.classify(sentence)
         return ClassificationResponse(sentence=sentence, result=result)
+    
+    async def explain(self, sentence):
+        if self.service.model is None:
+            return 'Model not found'
+        result = await self.service.explain_prediction(sentence)
+        return result
+    
+    async def evaluate_robustness(self, sentence):
+        if self.service.model is None:
+            return 'Model not found'
+        result = await self.service.evaluate_robustness(sentence=sentence)
+        return result
 
 if __name__ == '__main__':
     service = VAKClassificationModelService()

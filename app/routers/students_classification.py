@@ -32,3 +32,51 @@ async def predict(body:InputSentence):
                 detail=str(e)
             ).get_serialized_response()
         )
+        
+@classify_student_router.post("/explain", status_code=status.HTTP_200_OK, tags=["VAKClassification"])
+async def explain(body:InputSentence):
+    try:
+        response = await service.explain(body.sentence)
+        return JSONResponse(
+            content=ResponseModel(
+                message='Explanation successful',
+                code=200,
+                data={
+                    'sentence': body.sentence,
+                    'result': response
+                }
+            ).get_serialized_response()
+        )
+    except Exception as e:
+        return JSONResponse(
+            content=ResponseModel(
+                message='Explanation failed',
+                code=500,
+                error=True,
+                detail=str(e)
+            ).get_serialized_response()
+        )
+
+@classify_student_router.post("/evaluate", status_code=status.HTTP_200_OK, tags=["VAKClassification"])
+async def evaluate(body:InputSentence):
+    try:
+        response = await service.evaluate_robustness(body.sentence)
+        return JSONResponse(
+            content=ResponseModel(
+                message='Evaluation successful',
+                code=200,
+                data={
+                    'sentence': body.sentence,
+                    'result': response
+                }
+            ).get_serialized_response()
+        )
+    except Exception as e:
+        return JSONResponse(
+            content=ResponseModel(
+                message='Evaluation failed',
+                code=500,
+                error=True,
+                detail=str(e)
+            ).get_serialized_response()
+        )
