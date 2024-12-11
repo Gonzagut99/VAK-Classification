@@ -1,0 +1,27 @@
+# Entornos Virtuales
+venv/
+env/
+
+# Archivos Compilados
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de Modelos y Datos Grandes
+*.joblib
+*.h5
+data/dataset.csv
+
+# Configuración Local
+.env
+
+# Archivos del Sistema Operativo
+.DS_Store
+Thumbs.db
+
+# Configuraciones del Editor/IDE
+.vscode/
+.idea/
+
+# Otros
+logs/
