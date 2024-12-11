@@ -23,6 +23,8 @@ WORKDIR /usr/dl_project
 # Instalar las dependencias
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN python3 -m pip install --upgrade https://storage.googleapis.com/tensorflow/mac/cpu/tensorflow-2.18.0-py3-none-any.whl
+
 ##
 # # Ejecutar el script de entrenamiento y validación del modelo
 # RUN python -m app.ml_models.score_prediction_model
